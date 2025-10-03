@@ -11,6 +11,29 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
+// When the toolbar icon is clicked, toggle the in-page floating overlay
+chrome.action.onClicked.addListener(async (tab) => {
+    try {
+        // Prefer sending a message to the content script; it already has the UI code
+        if (tab && tab.id != null) {
+            await chrome.tabs.sendMessage(tab.id, { action: 'toggleOverlay' });
+        }
+    } catch (e) {
+        // If the content script isn't injected (e.g., chrome:// or restricted pages), try injecting
+        try {
+            if (tab && tab.id != null) {
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ['content.js']
+                });
+                await chrome.tabs.sendMessage(tab.id, { action: 'toggleOverlay' });
+            }
+        } catch (e2) {
+            console.warn('Could not toggle overlay:', e2 && e2.message);
+        }
+    }
+});
+
 // Handle messages from content scripts or popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'getTranscript') {
