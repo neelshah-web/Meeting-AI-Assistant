@@ -484,7 +484,7 @@
         `;
         
         closeBtn.addEventListener('click', () => {
-            // Save closed state
+            // Save closed state for overlay only; do NOT stop recording
             saveOverlayState(false);
             overlay.remove();
         });
@@ -696,12 +696,18 @@
             </div>
         `;
         
-        // Initialize the Meeting Assistant functionality
+        // Initialize or reattach the Meeting Assistant functionality
         initializeOverlayFunctionality(container);
     }
     
     function initializeOverlayFunctionality(container) {
-        // Create a simplified version of the MeetingAssistant class
+        // If a controller already exists, just reattach the UI to it
+        if (window.assistant && typeof window.assistant.attachToContainer === 'function') {
+            window.assistant.attachToContainer(container);
+            return;
+        }
+        
+        // Create a simplified version of the MeetingAssistant class (controller + UI)
         const assistant = {
             transcripts: [],
             isRecording: false,
@@ -718,7 +724,7 @@
             _recognitionCooldown: false,
             _recognitionStartRequested: false,
             
-            // Get elements
+            // Get elements (initial binding)
             recordBtn: container.querySelector('#recordBtn'),
             status: container.querySelector('#status'),
             searchBox: container.querySelector('#searchBox'),
@@ -736,10 +742,46 @@
                 await this.loadTranscripts();
                 this.setupSyncListeners();
             },
+
+            // Reattach to a newly created overlay/container without stopping recording
+            attachToContainer(newContainer) {
+                this.recordBtn = newContainer.querySelector('#recordBtn');
+                this.status = newContainer.querySelector('#status');
+                this.searchBox = newContainer.querySelector('#searchBox');
+                this.transcriptList = newContainer.querySelector('#transcriptList');
+                this.recordingIndicator = newContainer.querySelector('#recordingIndicator');
+                this.timer = newContainer.querySelector('#timer');
+                this.liveTranscriptSection = newContainer.querySelector('#liveTranscriptSection');
+                this.liveTranscript = newContainer.querySelector('#liveTranscript');
+                this.completeTranscriptSection = newContainer.querySelector('#completeTranscriptSection');
+                this.completeTranscript = newContainer.querySelector('#completeTranscript');
+
+                // Bind listeners to the new elements
+                this.setupEventListeners();
+
+                // If recording is active, immediately reflect state and timer
+                if (this.isRecording) {
+                    try {
+                        this.timer.style.display = 'block';
+                        const elapsed = Date.now() - (this.startTime || Date.now());
+                        const minutes = Math.floor(elapsed / 60000);
+                        const seconds = Math.floor((elapsed % 60000) / 1000);
+                        this.timer.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                    } catch (_) {}
+                }
+
+                // Refresh transcripts list and UI to current state
+                this.displayTranscripts(this.transcripts || []);
+                this.updateUI();
+                // Ensure live transcript content remains visible if recording
+                if (this.isRecording) {
+                    this.liveTranscriptSection.style.display = 'block';
+                }
+            },
             
             setupEventListeners() {
-                this.recordBtn.addEventListener('click', () => this.toggleRecording());
-                this.searchBox.addEventListener('input', (e) => this.searchTranscripts(e.target.value));
+                this.recordBtn.onclick = () => this.toggleRecording();
+                this.searchBox.oninput = (e) => this.searchTranscripts(e.target.value);
             },
             
             
