@@ -40,21 +40,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
 });
 
-// Toggle the in-page floating overlay when the toolbar icon is clicked
-try {
-    chrome.action.onClicked.addListener((tab) => {
-        try {
-            if (tab && tab.id) {
-                chrome.tabs.sendMessage(tab.id, { action: 'toggleOverlay' }, () => {
-                    // Ignore errors for restricted pages (e.g., chrome://, Web Store, PDF)
-                    if (chrome.runtime && chrome.runtime.lastError) {
-                        // No-op
-                    }
-                });
-            }
-        } catch (_) {}
-    });
-} catch (_) {}
+// Open side panel when extension icon is clicked
+chrome.action.onClicked.addListener((tab) => {
+    chrome.sidePanel.open({ windowId: tab.windowId });
+});
 
 async function getTranscriptById(id) {
     try {
