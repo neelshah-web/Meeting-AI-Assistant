@@ -1,0 +1,313 @@
+/* Floating Meeting AI Assistant Styles */
+
+#meeting-ai-float-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    transition: all 0.3s ease;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+#meeting-ai-float-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+#meeting-ai-overlay {
+    position: fixed;
+    top: 0;
+    right: -450px;
+    width: 420px;
+    height: 100vh;
+    background: #1a1a2e;
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+    z-index: 1000000;
+    transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#meeting-ai-overlay.show {
+    right: 0;
+}
+
+#meeting-ai-overlay .panel-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+#meeting-ai-overlay .panel-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#meeting-ai-overlay .close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#meeting-ai-overlay .close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+#meeting-ai-overlay .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    color: white;
+}
+
+#meeting-ai-overlay .panel-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#meeting-ai-overlay .panel-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#meeting-ai-overlay .panel-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+#meeting-ai-overlay .section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#meeting-ai-overlay .record-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#meeting-ai-overlay .record-btn.start {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+#meeting-ai-overlay .record-btn.stop {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+#meeting-ai-overlay .status {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 12px;
+}
+
+#meeting-ai-overlay .recording-indicator {
+    display: none;
+    text-align: center;
+    color: #ef4444;
+    font-weight: 600;
+    animation: blink 1.5s infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#meeting-ai-overlay .timer {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    margin: 16px 0;
+    font-family: 'Courier New', monospace;
+    display: none;
+}
+
+#meeting-ai-overlay .live-transcript {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    min-height: 100px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: none;
+}
+
+#meeting-ai-overlay .live-transcript.show {
+    display: block;
+}
+
+#meeting-ai-overlay .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+    margin-bottom: 16px;
+}
+
+#meeting-ai-overlay .search-box {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    box-sizing: border-box;
+}
+
+#meeting-ai-overlay .search-box::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#meeting-ai-overlay .transcript-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#meeting-ai-overlay .transcript-item {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 14px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+}
+
+#meeting-ai-overlay .transcript-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
+}
+
+#meeting-ai-overlay .transcript-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#meeting-ai-overlay .transcript-date {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+#meeting-ai-overlay .transcript-actions {
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#meeting-ai-overlay .transcript-item:hover .transcript-actions {
+    opacity: 1;
+}
+
+#meeting-ai-overlay .action-btn {
+    padding: 4px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#meeting-ai-overlay .transcript-preview {
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+#meeting-ai-overlay .no-transcripts {
+    text-align: center;
+    opacity: 0.5;
+    font-style: italic;
+    padding: 20px;
+}
+
+#meeting-ai-overlay .transcript-label {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+#meeting-ai-overlay .no-transcript {
+    opacity: 0.5;
+    font-style: italic;
+    text-align: center;
+}
+
+#meeting-ai-overlay .complete-transcript {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: none;
+}
+
+#meeting-ai-overlay .complete-transcript.show {
+    display: block;
+}

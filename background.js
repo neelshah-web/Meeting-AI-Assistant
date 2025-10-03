@@ -2,7 +2,7 @@
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log('Meeting AI Assistant installed');
-    
+
     // Initialize storage
     chrome.storage.local.get(['transcripts'], (result) => {
         if (!result.transcripts) {
@@ -15,19 +15,19 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'getTranscript') {
         getTranscriptById(request.id).then(sendResponse);
-        return true; // Will respond asynchronously
+        return true;
     }
-    
+
     if (request.action === 'deleteTranscript') {
         deleteTranscript(request.id).then(sendResponse);
         return true;
     }
-    
+
     if (request.action === 'exportTranscripts') {
         exportTranscripts().then(sendResponse);
         return true;
     }
-    
+
     if (request.action === 'openTranscriptTab') {
         try {
             const url = chrome.runtime.getURL('transcript.html') + '?id=' + request.id;
@@ -37,12 +37,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         return true;
     }
-    
 });
 
-// Open side panel when extension icon is clicked
+// Toggle floating overlay when extension icon is clicked
 chrome.action.onClicked.addListener((tab) => {
-    chrome.sidePanel.open({ windowId: tab.windowId });
+    chrome.tabs.sendMessage(tab.id, { action: 'toggleOverlay' }, (response) => {
+        if (chrome.runtime.lastError) {
+            console.log('Could not toggle overlay:', chrome.runtime.lastError.message);
+        }
+    });
 });
 
 async function getTranscriptById(id) {
@@ -72,8 +75,7 @@ async function exportTranscripts() {
     try {
         const result = await chrome.storage.local.get(['transcripts']);
         const transcripts = result.transcripts || [];
-        
-        // Create exportable format
+
         const exportData = {
             exportDate: new Date().toISOString(),
             totalTranscripts: transcripts.length,
@@ -83,7 +85,7 @@ async function exportTranscripts() {
                 id: t.id
             }))
         };
-        
+
         return { success: true, data: exportData };
     } catch (error) {
         return { success: false, error: error.message };

@@ -6,14 +6,10 @@
   "permissions": [
     "activeTab",
     "storage",
-    "scripting",
-    "sidePanel"
+    "scripting"
   ],
   "action": {
     "default_title": "Meeting AI Assistant"
-  },
-  "side_panel": {
-    "default_path": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -21,12 +17,13 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["content.js"],
+      "css": ["floating-panel.css"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["popup.html", "popup.js", "transcript.html", "transcript.js"],
+      "resources": ["popup.html", "popup.js", "transcript.html", "transcript.js", "floating-panel.css"],
       "matches": ["<all_urls>"]
     }
   ]
