@@ -1685,6 +1685,15 @@
                     title: document.title
                 });
             }
+            if (request.action === 'toggleOverlay') {
+                try {
+                    toggleFloatingOverlay();
+                    sendResponse && sendResponse({ success: true });
+                } catch (e) {
+                    sendResponse && sendResponse({ success: false, error: e && e.message });
+                }
+                return true;
+            }
         });
     } catch (error) {
         console.log('Could not set up message listener:', error);
