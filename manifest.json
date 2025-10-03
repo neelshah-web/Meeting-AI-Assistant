@@ -5,8 +5,12 @@
   "description": "Record meetings, convert speech to text, and search through transcripts",
   "permissions": [
     "activeTab",
+    "tabs",
     "storage",
     "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_title": "Meeting AI Assistant"

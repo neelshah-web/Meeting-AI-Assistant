@@ -167,27 +167,33 @@
         
         const button = document.createElement('div');
         button.id = 'meeting-ai-float-btn';
-        button.innerHTML = '🎤';
+        // Avatar bubble with presence dot (collapsed state like Image 1)
+        button.innerHTML = `
+            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ffd08a, #a48bff 60%, #5ad6ff); border: 2px solid rgba(255,255,255,0.15);"></div>
+                <span style="position: absolute; right: 6px; bottom: 6px; width: 10px; height: 10px; background: #35d36b; border: 2px solid #0f1114; border-radius: 50%;"></span>
+            </div>
+        `;
         button.style.cssText = `
             position: fixed !important;
-            top: 20px !important;
-            right: 20px !important;
-            width: 60px !important;
-            height: 60px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            border-radius: 50% !important;
+            top: 24px !important;
+            right: 16px !important;
+            width: 56px !important;
+            height: 56px !important;
+            background: rgba(15, 17, 20, 0.95) !important;
+            border-radius: 20px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             cursor: pointer !important;
             z-index: 2147483647 !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
-            font-size: 24px !important;
-            transition: all 0.3s ease !important;
-            border: 3px solid rgba(255, 255, 255, 0.2) !important;
-            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            backdrop-filter: blur(8px) !important;
             user-select: none !important;
             pointer-events: auto !important;
+            overflow: hidden !important;
         `;
         
         // Add pulsing animation for better visibility
@@ -198,21 +204,13 @@
                 70% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(102, 126, 234, 0); }
                 100% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0); }
             }
-            #meeting-ai-float-btn:hover {
-                animation: meeting-ai-pulse 2s infinite;
-            }
+            #meeting-ai-float-btn:hover { animation: meeting-ai-pulse 2s infinite; }
         `;
         document.head.appendChild(style);
         
-        button.addEventListener('mouseenter', () => {
-            button.style.transform = 'scale(1.15)';
-            button.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.4)';
-        });
+        button.addEventListener('mouseenter', () => { button.style.transform = 'scale(1.06)'; });
         
-        button.addEventListener('mouseleave', () => {
-            button.style.transform = 'scale(1)';
-            button.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)';
-        });
+        button.addEventListener('mouseleave', () => { button.style.transform = 'scale(1)'; });
         
         button.addEventListener('click', (e) => {
             console.log('Floating button clicked');
@@ -230,48 +228,8 @@
             return;
         }
         
-        // Enhanced tooltip with more content
-        const tooltip = document.createElement('div');
-        tooltip.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 4px;">🎤 Meeting AI Assistant</div>
-            <div style="font-size: 11px; opacity: 0.9;">Click to start recording & transcription</div>
-            <div style="font-size: 10px; opacity: 0.7; margin-top: 2px;">Platform: ${currentPlatform || 'Generic'}</div>
-        `;
-        tooltip.style.cssText = `
-            position: fixed;
-            top: 85px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            z-index: 999998;
-            opacity: 0;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            max-width: 200px;
-            line-height: 1.3;
-        `;
-        
-        try {
-            document.body.appendChild(tooltip);
-        } catch (error) {
-            console.error('Failed to add tooltip to body:', error);
-        }
-        
-        button.addEventListener('mouseenter', () => {
-            tooltip.style.opacity = '1';
-            tooltip.style.transform = 'translateY(-5px)';
-        });
-        
-        button.addEventListener('mouseleave', () => {
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'translateY(0)';
-        });
+        // Minimal tooltip removed for compact look
+        const tooltip = null;
         
         // Make button draggable for better positioning
         let isDragging = false;
@@ -296,10 +254,7 @@
                 button.style.top = newY + 'px';
                 button.style.right = 'auto';
                 
-                // Update tooltip position
-                tooltip.style.left = (newX + 65) + 'px';
-                tooltip.style.top = newY + 'px';
-                tooltip.style.right = 'auto';
+                // No external tooltip to update in compact mode
             }
         });
         
@@ -425,23 +380,24 @@
     }
     
     function createFloatingOverlay() {
-        // Create overlay container
+        // Create overlay container (slide-out panel like Image 2)
         const overlay = document.createElement('div');
         overlay.id = 'meeting-ai-overlay';
         overlay.style.cssText = `
             position: fixed !important;
-            top: 50px !important;
-            right: 20px !important;
-            width: 400px !important;
-            height: 600px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            border-radius: 15px !important;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+            top: 12px !important;
+            right: 12px !important;
+            bottom: 12px !important;
+            width: 420px !important;
+            height: calc(100vh - 24px) !important;
+            background: rgba(17, 19, 23, 0.98) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
             z-index: 2147483647 !important;
-            border: 3px solid rgba(255, 255, 255, 0.2) !important;
-            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            backdrop-filter: blur(12px) !important;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-            color: white !important;
+            color: rgba(255,255,255,0.95) !important;
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
@@ -453,24 +409,25 @@
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
-            padding: 15px 20px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+            padding: 14px 16px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: rgba(255,255,255,0.02) !important;
         `;
         
         const title = document.createElement('h1');
         title.textContent = '🎤 Meeting AI';
         title.style.cssText = `
             margin: 0 !important;
-            font-size: 20px !important;
-            font-weight: 300 !important;
-            color: white !important;
+            font-size: 18px !important;
+            font-weight: 500 !important;
+            color: rgba(255,255,255,0.95) !important;
         `;
         
         const closeBtn = document.createElement('button');
         closeBtn.innerHTML = '✕';
         closeBtn.style.cssText = `
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
             border-radius: 50% !important;
             width: 30px !important;
             height: 30px !important;
@@ -489,13 +446,9 @@
             overlay.remove();
         });
         
-        closeBtn.addEventListener('mouseenter', () => {
-            closeBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-        });
+        closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.12)'; });
         
-        closeBtn.addEventListener('mouseleave', () => {
-            closeBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-        });
+        closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.06)'; });
         
         header.appendChild(title);
         header.appendChild(closeBtn);
@@ -504,8 +457,8 @@
         const contentContainer = document.createElement('div');
         contentContainer.style.cssText = `
             width: 100% !important;
-            height: calc(100% - 70px) !important;
-            padding: 15px !important;
+            height: calc(100% - 60px) !important;
+            padding: 14px !important;
             overflow-y: auto !important;
             box-sizing: border-box !important;
         `;
@@ -559,14 +512,14 @@
             document.body.appendChild(overlay);
             console.log('Meeting AI floating overlay added to DOM successfully');
             
-            // Add animation
+            // Slide-in animation from the right
             overlay.style.opacity = '0';
-            overlay.style.transform = 'scale(0.8) translateY(-20px)';
-            overlay.style.transition = 'all 0.3s ease';
+            overlay.style.transform = 'translateX(24px)';
+            overlay.style.transition = 'opacity 220ms ease, transform 220ms ease';
             
             setTimeout(() => {
                 overlay.style.opacity = '1';
-                overlay.style.transform = 'scale(1) translateY(0)';
+                overlay.style.transform = 'translateX(0)';
                 console.log('Meeting AI floating overlay animation completed');
             }, 10);
             

@@ -56,6 +56,38 @@ try {
     });
 } catch (_) {}
 
+// Ensure overlay stays consistent when changing active tabs or updating pages
+try {
+    chrome.tabs.onActivated.addListener(async (activeInfo) => {
+        try {
+            const overlayState = await chrome.storage.local.get(['overlayState']);
+            const isOpen = overlayState && overlayState.overlayState && overlayState.overlayState.isOpen;
+            if (isOpen && activeInfo && activeInfo.tabId) {
+                chrome.tabs.sendMessage(activeInfo.tabId, { action: 'openOverlay' }, () => {
+                    // Ignore errors for restricted pages
+                });
+            }
+        } catch (_) {}
+    });
+} catch (_) {}
+
+try {
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'complete') {
+            chrome.storage.local.get(['overlayState'], (data) => {
+                try {
+                    const isOpen = data && data.overlayState && data.overlayState.isOpen;
+                    if (isOpen && tabId) {
+                        chrome.tabs.sendMessage(tabId, { action: 'openOverlay' }, () => {
+                            // Ignore errors
+                        });
+                    }
+                } catch (_) {}
+            });
+        }
+    });
+} catch (_) {}
+
 async function getTranscriptById(id) {
     try {
         const result = await chrome.storage.local.get(['transcripts']);
