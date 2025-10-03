@@ -5,6 +5,7 @@
   "description": "Record meetings, convert speech to text, and search through transcripts",
   "permissions": [
     "activeTab",
+    "tabs",
     "storage",
     "scripting"
   ],
