@@ -9,7 +9,6 @@
     "scripting"
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_title": "Meeting AI Assistant"
   },
   "background": {
