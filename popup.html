@@ -2,287 +2,422 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {
-            width: 100%;
-            height: 100vh;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            color: white;
+        * {
             margin: 0;
-            overflow-y: auto;
+            padding: 0;
             box-sizing: border-box;
         }
-        
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1a1a2e;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+
         .header {
-            text-align: center;
-            margin-bottom: 20px;
+            padding: 24px 20px;
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
         }
-        
+
         .header h1 {
+            font-size: 20px;
+            font-weight: 600;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1::before {
+            content: '🎤';
             font-size: 24px;
-            font-weight: 300;
         }
-        
-        .recording-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            backdrop-filter: blur(10px);
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        
+
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+            margin-bottom: 16px;
+        }
+
         .record-btn {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             border: none;
-            border-radius: 25px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
+
         .record-btn.start {
-            background: #4CAF50;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
         }
-        
-        .record-btn.stop {
-            background: #f44336;
-            color: white;
-        }
-        
-        .record-btn:hover {
+
+        .record-btn.start:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
-        
+
+        .record-btn.stop {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .record-btn.stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
         .status {
             text-align: center;
-            font-size: 14px;
-            margin-top: 10px;
-            opacity: 0.8;
-        }
-        
-        .transcripts-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .search-box {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 20px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        
-        .transcript-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .transcript-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .transcript-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .transcript-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-        
-        .transcript-actions {
-            display: flex;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .transcript-item:hover .transcript-actions {
-            opacity: 1;
-        }
-        
-        .action-btn {
-            padding: 4px 8px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-        
-        .share-btn {
-            background: rgba(76, 175, 80, 0.8);
-            border-color: rgba(76, 175, 80, 0.5);
-        }
-        
-        .view-btn {
-            background: rgba(33, 150, 243, 0.8);
-            border-color: rgba(33, 150, 243, 0.5);
-        }
-        
-        .delete-btn {
-            background: rgba(244, 67, 54, 0.8);
-            border-color: rgba(244, 67, 54, 0.5);
-        }
-        
-        .transcript-date {
-            font-size: 12px;
+            font-size: 13px;
             opacity: 0.7;
+            margin-bottom: 12px;
         }
-        
-        .transcript-preview {
-            font-size: 14px;
-            margin-top: 5px;
-            line-height: 1.3;
-        }
-        
-        .no-transcripts {
-            text-align: center;
-            opacity: 0.7;
-            font-style: italic;
-        }
-        
+
         .recording-indicator {
             display: none;
             text-align: center;
-            color: #ff4444;
-            font-weight: bold;
-            animation: pulse 1s infinite;
+            color: #ef4444;
+            font-weight: 600;
+            animation: blink 1.5s infinite;
+            margin-bottom: 12px;
+            font-size: 14px;
         }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+
+        .recording-indicator::before {
+            content: '●';
+            margin-right: 6px;
         }
-        
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
         .timer {
             text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 16px 0;
             font-family: 'Courier New', monospace;
-        }
-        
-        .live-transcript {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            margin: 15px 0;
-            text-align: left;
-            min-height: 80px;
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.4;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 2px;
             display: none;
         }
-        
+
+        .live-transcript {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
         .live-transcript.show {
             display: block;
         }
-        
+
+        .live-transcript::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .live-transcript::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .live-transcript::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
         .transcript-label {
             font-size: 11px;
-            opacity: 0.7;
-            margin-bottom: 8px;
+            opacity: 0.6;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 600;
         }
-        
+
         .interim-text {
-            opacity: 0.6;
+            opacity: 0.5;
             font-style: italic;
         }
-        
-        .final-text {
-            opacity: 1;
-        }
-        
+
         .no-transcript {
             opacity: 0.5;
             font-style: italic;
             text-align: center;
         }
-        
+
         .complete-transcript {
             background: rgba(0, 0, 0, 0.4);
             border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            text-align: left;
-            max-height: 200px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 250px;
             overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.5;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             display: none;
         }
-        
+
         .complete-transcript.show {
             display: block;
+        }
+
+        .complete-transcript::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .complete-transcript::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .complete-transcript::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .search-box::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .transcript-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transcript-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .transcript-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .transcript-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .transcript-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .transcript-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(4px);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .transcript-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .transcript-date {
+            font-size: 11px;
+            opacity: 0.6;
+            font-weight: 500;
+        }
+
+        .transcript-actions {
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .transcript-item:hover .transcript-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            padding: 4px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .share-btn {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .share-btn:hover {
+            background: rgba(16, 185, 129, 0.5);
+        }
+
+        .view-btn {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .view-btn:hover {
+            background: rgba(59, 130, 246, 0.5);
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.5);
+        }
+
+        .transcript-preview {
+            font-size: 13px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .no-transcripts {
+            text-align: center;
+            opacity: 0.5;
+            font-style: italic;
+            padding: 40px 20px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🎤 Meeting AI</h1>
+        <h1>Meeting AI Assistant</h1>
     </div>
-    
-    <div class="recording-section">
-        <button id="recordBtn" class="record-btn start">Start Recording</button>
-        <div id="recordingIndicator" class="recording-indicator">● Recording...</div>
-        <div id="timer" class="timer" style="display: none;">00:00</div>
-        <div id="status" class="status">Click to start recording</div>
-    </div>
-    
-    <div id="liveTranscriptSection" class="live-transcript">
-        <div class="transcript-label">Live Transcript</div>
-        <div id="liveTranscript" class="no-transcript">Start recording to see live transcription...</div>
-    </div>
-    
-    <div id="completeTranscriptSection" class="complete-transcript">
-        <div class="transcript-label">Complete Transcript</div>
-        <div id="completeTranscript"></div>
-    </div>
-    
-    <div class="transcripts-section">
-        <input type="text" id="searchBox" class="search-box" placeholder="Search transcripts...">
-        <div id="transcriptList" class="transcript-list">
-            <div class="no-transcripts">No transcripts yet</div>
+
+    <div class="content">
+        <div class="section">
+            <button id="recordBtn" class="record-btn start">Start Recording</button>
+            <div id="recordingIndicator" class="recording-indicator">Recording</div>
+            <div id="timer" class="timer">00:00</div>
+            <div id="status" class="status">Click to start recording</div>
+
+            <div id="liveTranscriptSection" class="live-transcript">
+                <div class="transcript-label">Live Transcript</div>
+                <div id="liveTranscript" class="no-transcript">Start recording to see live transcription...</div>
+            </div>
+
+            <div id="completeTranscriptSection" class="complete-transcript">
+                <div class="transcript-label">Complete Transcript</div>
+                <div id="completeTranscript"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Previous Recordings</div>
+            <input type="text" id="searchBox" class="search-box" placeholder="Search transcripts...">
+            <div id="transcriptList" class="transcript-list">
+                <div class="no-transcripts">No transcripts yet</div>
+            </div>
         </div>
     </div>
-    
+
     <script src="popup.js"></script>
 </body>
 </html>
