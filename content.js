@@ -49,17 +49,9 @@
         }
     });
     
-    // Restore button position on page load
+    // Do not restore manual position; keep right-center drawer launcher
     window.addEventListener('load', () => {
-        const savedPosition = localStorage.getItem('meetingAI_buttonPosition');
-        if (savedPosition && window.meetingAIButton) {
-            const position = JSON.parse(savedPosition);
-            if (position.left && position.top) {
-                window.meetingAIButton.button.style.left = position.left;
-                window.meetingAIButton.button.style.top = position.top;
-                window.meetingAIButton.button.style.right = 'auto';
-            }
-        }
+        try { localStorage.removeItem('meetingAI_buttonPosition'); } catch (_) {}
     });
     
     // Handle page navigation (SPA support)
@@ -167,52 +159,71 @@
         
         const button = document.createElement('div');
         button.id = 'meeting-ai-float-btn';
-        button.innerHTML = '🎤';
+        // Avatar-in-pill launcher (Image 1)
+        button.innerHTML = `
+            <div id="meeting-ai-launcher-pill" style="
+                position: relative;
+                width: 56px;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(10, 12, 15, 0.95);
+                border-radius: 18px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+                border: 1px solid rgba(255,255,255,0.06);
+                padding: 4px;
+            ">
+                <div style="
+                    position: relative;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    background: radial-gradient(100% 100% at 20% 0%, #b48cf4 0%, #7ca7ff 55%, #67ffd9 100%);
+                    box-shadow: inset 0 1px 4px rgba(0,0,0,0.35);
+                    overflow: hidden;
+                "></div>
+                <span style="
+                    position: absolute;
+                    right: 6px;
+                    bottom: 6px;
+                    width: 10px;
+                    height: 10px;
+                    background: #2ecc71;
+                    border: 2px solid rgba(10,12,15,0.95);
+                    border-radius: 50%;
+                "></span>
+            </div>
+        `;
         button.style.cssText = `
             position: fixed !important;
-            top: 20px !important;
-            right: 20px !important;
-            width: 60px !important;
-            height: 60px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            border-radius: 50% !important;
+            top: 50% !important;
+            right: 16px !important;
+            transform: translateY(-50%);
+            width: 64px !important;
+            height: 64px !important;
+            border-radius: 22px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             cursor: pointer !important;
             z-index: 2147483647 !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
-            font-size: 24px !important;
-            transition: all 0.3s ease !important;
-            border: 3px solid rgba(255, 255, 255, 0.2) !important;
-            backdrop-filter: blur(10px) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
             user-select: none !important;
             pointer-events: auto !important;
+            background: transparent !important;
         `;
         
         // Add pulsing animation for better visibility
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes meeting-ai-pulse {
-                0% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0.7); }
-                70% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(102, 126, 234, 0); }
-                100% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0); }
-            }
-            #meeting-ai-float-btn:hover {
-                animation: meeting-ai-pulse 2s infinite;
-            }
+            #meeting-ai-float-btn:hover { transform: translateY(-50%) scale(1.06); }
         `;
         document.head.appendChild(style);
         
-        button.addEventListener('mouseenter', () => {
-            button.style.transform = 'scale(1.15)';
-            button.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.4)';
-        });
+        button.addEventListener('mouseenter', () => {});
         
-        button.addEventListener('mouseleave', () => {
-            button.style.transform = 'scale(1)';
-            button.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)';
-        });
+        button.addEventListener('mouseleave', () => {});
         
         button.addEventListener('click', (e) => {
             console.log('Floating button clicked');
@@ -225,6 +236,7 @@
         try {
             document.body.appendChild(button);
             console.log('Meeting AI button added successfully');
+            try { localStorage.removeItem('meetingAI_buttonPosition'); } catch (_) {}
         } catch (error) {
             console.error('Failed to add button to body:', error);
             return;
@@ -239,21 +251,22 @@
         `;
         tooltip.style.cssText = `
             position: fixed;
-            top: 85px;
-            right: 20px;
+            top: 50%;
+            right: 92px;
+            transform: translateY(-50%);
             background: rgba(0, 0, 0, 0.9);
             color: white;
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 12px;
             z-index: 999998;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: opacity 0.2s ease, transform 0.2s ease;
             pointer-events: none;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            max-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            max-width: 220px;
             line-height: 1.3;
         `;
         
@@ -265,50 +278,19 @@
         
         button.addEventListener('mouseenter', () => {
             tooltip.style.opacity = '1';
-            tooltip.style.transform = 'translateY(-5px)';
+            tooltip.style.transform = 'translateY(-50%)';
         });
         
         button.addEventListener('mouseleave', () => {
             tooltip.style.opacity = '0';
-            tooltip.style.transform = 'translateY(0)';
+            tooltip.style.transform = 'translateY(-50%)';
         });
         
         // Make button draggable for better positioning
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
         
-        button.addEventListener('mousedown', (e) => {
-            if (e.button === 0) { // Left click only
-                isDragging = true;
-                dragOffset.x = e.clientX - button.offsetLeft;
-                dragOffset.y = e.clientY - button.offsetTop;
-                button.style.cursor = 'grabbing';
-                e.preventDefault();
-            }
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const newX = Math.max(0, Math.min(window.innerWidth - 60, e.clientX - dragOffset.x));
-                const newY = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragOffset.y));
-                
-                button.style.left = newX + 'px';
-                button.style.top = newY + 'px';
-                button.style.right = 'auto';
-                
-                // Update tooltip position
-                tooltip.style.left = (newX + 65) + 'px';
-                tooltip.style.top = newY + 'px';
-                tooltip.style.right = 'auto';
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                button.style.cursor = 'pointer';
-            }
-        });
+        // Keep the launcher fixed at right-center; drag disabled for drawer UX
         
         // Keep button visible when page changes
         const observer = new MutationObserver(() => {
@@ -340,6 +322,10 @@
             console.log('Closing existing overlay');
             saveOverlayState(false);
             existingOverlay.remove();
+            try {
+                const launcher = document.getElementById('meeting-ai-float-btn');
+                if (launcher) launcher.style.display = 'flex';
+            } catch (_) {}
             return;
         }
         
@@ -403,9 +389,7 @@
                                 // Restore position if available
                                 const overlay = document.getElementById('meeting-ai-overlay');
                                 if (overlay) {
-                                    overlay.style.left = result.overlayState.position.left;
-                                    overlay.style.top = result.overlayState.position.top;
-                                    overlay.style.right = 'auto';
+                                    // Drawer is fixed; ignore previous drag positions
                                 }
                             }
                         }, 1000); // Delay to ensure page is loaded
@@ -425,21 +409,22 @@
     }
     
     function createFloatingOverlay() {
-        // Create overlay container
+        // Create overlay container (Right-side drawer)
         const overlay = document.createElement('div');
         overlay.id = 'meeting-ai-overlay';
         overlay.style.cssText = `
             position: fixed !important;
-            top: 50px !important;
-            right: 20px !important;
+            top: 16px !important;
+            right: 16px !important;
+            bottom: 16px !important;
             width: 400px !important;
-            height: 600px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            border-radius: 15px !important;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+            max-width: min(92vw, 420px) !important;
+            background: #0b0d11 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55) !important;
             z-index: 2147483647 !important;
-            border: 3px solid rgba(255, 255, 255, 0.2) !important;
-            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            backdrop-filter: blur(8px) !important;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
             color: white !important;
             overflow: hidden !important;
@@ -453,25 +438,27 @@
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
-            padding: 15px 20px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+            padding: 14px 16px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: rgba(255,255,255,0.02) !important;
         `;
         
         const title = document.createElement('h1');
         title.textContent = '🎤 Meeting AI';
         title.style.cssText = `
             margin: 0 !important;
-            font-size: 20px !important;
-            font-weight: 300 !important;
+            font-size: 18px !important;
+            font-weight: 500 !important;
             color: white !important;
+            letter-spacing: 0.2px !important;
         `;
         
         const closeBtn = document.createElement('button');
         closeBtn.innerHTML = '✕';
         closeBtn.style.cssText = `
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            border-radius: 50% !important;
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 10px !important;
             width: 30px !important;
             height: 30px !important;
             color: white !important;
@@ -480,13 +467,17 @@
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            transition: all 0.3s ease !important;
+            transition: background 0.2s ease !important;
         `;
         
         closeBtn.addEventListener('click', () => {
             // Save closed state for overlay only; do NOT stop recording
             saveOverlayState(false);
             overlay.remove();
+            try {
+                const launcher = document.getElementById('meeting-ai-float-btn');
+                if (launcher) launcher.style.display = 'flex';
+            } catch (_) {}
         });
         
         closeBtn.addEventListener('mouseenter', () => {
@@ -504,8 +495,8 @@
         const contentContainer = document.createElement('div');
         contentContainer.style.cssText = `
             width: 100% !important;
-            height: calc(100% - 70px) !important;
-            padding: 15px !important;
+            height: calc(100% - 54px) !important;
+            padding: 14px !important;
             overflow-y: auto !important;
             box-sizing: border-box !important;
         `;
@@ -513,42 +504,7 @@
         // Create the popup content directly
         createPopupContent(contentContainer);
         
-        // Make overlay draggable
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
-        
-        header.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            dragOffset.x = e.clientX - overlay.offsetLeft;
-            dragOffset.y = e.clientY - overlay.offsetTop;
-            header.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const newX = Math.max(0, Math.min(window.innerWidth - 400, e.clientX - dragOffset.x));
-                const newY = Math.max(0, Math.min(window.innerHeight - 600, e.clientY - dragOffset.y));
-                
-                overlay.style.left = newX + 'px';
-                overlay.style.top = newY + 'px';
-                overlay.style.right = 'auto';
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                header.style.cursor = 'grab';
-                
-                // Save position when dragging stops
-                const position = {
-                    left: overlay.style.left,
-                    top: overlay.style.top
-                };
-                saveOverlayState(true, position);
-            }
-        });
+        // Drawer UX: no dragging; keep fixed to right
         
         // Assemble overlay
         overlay.appendChild(header);
@@ -561,18 +517,24 @@
             
             // Add animation
             overlay.style.opacity = '0';
-            overlay.style.transform = 'scale(0.8) translateY(-20px)';
-            overlay.style.transition = 'all 0.3s ease';
+            overlay.style.transform = 'translateX(16px)';
+            overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
             
             setTimeout(() => {
                 overlay.style.opacity = '1';
-                overlay.style.transform = 'scale(1) translateY(0)';
+                overlay.style.transform = 'translateX(0)';
                 console.log('Meeting AI floating overlay animation completed');
             }, 10);
             
         } catch (error) {
             console.error('Failed to add overlay to DOM:', error);
         }
+
+        // Hide launcher while drawer is open
+        try {
+            const launcher = document.getElementById('meeting-ai-float-btn');
+            if (launcher) launcher.style.display = 'none';
+        } catch (_) {}
     }
     
     function createPopupContent(container) {
