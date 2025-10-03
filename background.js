@@ -38,6 +38,44 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
     
+    if (request.action === 'openSideWindow') {
+        try {
+            // Get current window bounds
+            chrome.windows.getCurrent({}, (currentWin) => {
+                const defaultWidth = 420;
+                const width = Math.max(360, Math.min(520, defaultWidth));
+                const height = currentWin && currentWin.height ? currentWin.height : 800;
+                const leftBase = currentWin && typeof currentWin.left === 'number' ? currentWin.left : 0;
+                const topBase = currentWin && typeof currentWin.top === 'number' ? currentWin.top : 0;
+                const curWidth = currentWin && currentWin.width ? currentWin.width : 1200;
+                const left = leftBase + Math.max(0, curWidth - width);
+                const top = topBase;
+                const url = chrome.runtime.getURL('popup.html');
+                
+                chrome.windows.create({
+                    url: url,
+                    type: 'popup',
+                    focused: true,
+                    width: width,
+                    height: height,
+                    left: left,
+                    top: top
+                }, (createdWin) => {
+                    // Minimize the current window if possible
+                    try {
+                        if (currentWin && currentWin.id) {
+                            chrome.windows.update(currentWin.id, { state: 'minimized' });
+                        }
+                    } catch (_) {}
+                    sendResponse && sendResponse({ success: true, windowId: createdWin && createdWin.id });
+                });
+            });
+        } catch (e) {
+            sendResponse && sendResponse({ success: false, error: e.message });
+        }
+        return true;
+    }
+    
 });
 
 async function getTranscriptById(id) {

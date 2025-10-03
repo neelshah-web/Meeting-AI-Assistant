@@ -49,17 +49,33 @@
         }
     });
     
-    // Restore button position on page load
+    // Restore button position on page load (prefer chrome.storage over localStorage)
     window.addEventListener('load', () => {
-        const savedPosition = localStorage.getItem('meetingAI_buttonPosition');
-        if (savedPosition && window.meetingAIButton) {
-            const position = JSON.parse(savedPosition);
-            if (position.left && position.top) {
-                window.meetingAIButton.button.style.left = position.left;
-                window.meetingAIButton.button.style.top = position.top;
-                window.meetingAIButton.button.style.right = 'auto';
-            }
-        }
+        (async () => {
+            try {
+                if (window.chrome && chrome.storage && chrome.storage.local) {
+                    const result = await chrome.storage.local.get(['meetingAI_buttonPosition']);
+                    const position = result.meetingAI_buttonPosition;
+                    if (position && window.meetingAIButton) {
+                        if (position.left && position.top) {
+                            window.meetingAIButton.button.style.left = position.left;
+                            window.meetingAIButton.button.style.top = position.top;
+                            window.meetingAIButton.button.style.right = 'auto';
+                        }
+                    }
+                } else {
+                    const savedPosition = localStorage.getItem('meetingAI_buttonPosition');
+                    if (savedPosition && window.meetingAIButton) {
+                        const position = JSON.parse(savedPosition);
+                        if (position.left && position.top) {
+                            window.meetingAIButton.button.style.left = position.left;
+                            window.meetingAIButton.button.style.top = position.top;
+                            window.meetingAIButton.button.style.right = 'auto';
+                        }
+                    }
+                }
+            } catch (_) {}
+        })();
     });
     
     // Handle page navigation (SPA support)
@@ -307,6 +323,15 @@
             if (isDragging) {
                 isDragging = false;
                 button.style.cursor = 'pointer';
+                // Persist button position globally
+                const position = { left: button.style.left, top: button.style.top };
+                try {
+                    if (window.chrome && chrome.storage && chrome.storage.local) {
+                        chrome.storage.local.set({ meetingAI_buttonPosition: position });
+                    } else {
+                        localStorage.setItem('meetingAI_buttonPosition', JSON.stringify(position));
+                    }
+                } catch (_) {}
             }
         });
         
@@ -423,6 +448,47 @@
             console.error('Error restoring overlay state:', error);
         }
     }
+
+    // Listen for cross-tab updates to overlay/button state
+    try {
+        if (window.chrome && chrome.storage && chrome.storage.onChanged) {
+            chrome.storage.onChanged.addListener((changes, area) => {
+                if (area !== 'local') return;
+                // Sync floating button position
+                if (changes.meetingAI_buttonPosition && window.meetingAIButton) {
+                    const pos = changes.meetingAI_buttonPosition.newValue;
+                    if (pos && pos.left && pos.top) {
+                        window.meetingAIButton.button.style.left = pos.left;
+                        window.meetingAIButton.button.style.top = pos.top;
+                        window.meetingAIButton.button.style.right = 'auto';
+                    }
+                }
+                // Sync overlay open/position state
+                if (changes.overlayState) {
+                    const st = changes.overlayState.newValue;
+                    const existing = document.getElementById('meeting-ai-overlay');
+                    if (st && st.isOpen) {
+                        // Ensure overlay exists
+                        if (!existing) {
+                            createFloatingOverlay();
+                        }
+                        // Apply position if provided
+                        setTimeout(() => {
+                            const ov = document.getElementById('meeting-ai-overlay');
+                            if (ov && st.position) {
+                                ov.style.left = st.position.left;
+                                ov.style.top = st.position.top;
+                                ov.style.right = 'auto';
+                            }
+                        }, 50);
+                    } else if (existing && st && st.isOpen === false) {
+                        // Close overlay everywhere
+                        existing.remove();
+                    }
+                }
+            });
+        }
+    } catch (_) {}
     
     function createFloatingOverlay() {
         // Create overlay container
@@ -468,6 +534,38 @@
         
         const closeBtn = document.createElement('button');
         closeBtn.innerHTML = '✕';
+        // Pop-out button
+        const popOutBtn = document.createElement('button');
+        popOutBtn.innerHTML = '⇱';
+        popOutBtn.title = 'Open side window';
+        popOutBtn.style.cssText = `
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 50% !important;
+            width: 30px !important;
+            height: 30px !important;
+            color: white !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.3s ease !important;
+            margin-right: 8px !important;
+        `;
+        popOutBtn.addEventListener('mouseenter', () => {
+            popOutBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+        });
+        popOutBtn.addEventListener('mouseleave', () => {
+            popOutBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+        });
+        popOutBtn.addEventListener('click', async () => {
+            try {
+                chrome.runtime.sendMessage({ action: 'openSideWindow' });
+            } catch (e) {
+                console.warn('Could not request side window:', e);
+            }
+        });
         closeBtn.style.cssText = `
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -498,6 +596,7 @@
         });
         
         header.appendChild(title);
+        header.appendChild(popOutBtn);
         header.appendChild(closeBtn);
         
         // Create content container directly (no iframe)
