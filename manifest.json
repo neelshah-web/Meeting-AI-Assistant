@@ -9,6 +9,9 @@
     "storage",
     "scripting"
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_title": "Meeting AI Assistant"
   },
