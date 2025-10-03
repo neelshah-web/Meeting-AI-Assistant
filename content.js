@@ -486,6 +486,8 @@
         closeBtn.addEventListener('click', () => {
             // Save closed state
             saveOverlayState(false);
+            // Detach UI but keep any active recording running
+            try { window.assistant && window.assistant.detachUI && window.assistant.detachUI(); } catch (_) {}
             overlay.remove();
         });
         
@@ -701,6 +703,23 @@
     }
     
     function initializeOverlayFunctionality(container) {
+        // If an assistant already exists, just re-bind the UI to it and sync state
+        if (window.assistant && typeof window.assistant.attachUI === 'function') {
+            try {
+                window.assistant.attachUI(container);
+                window.assistant.updateUI();
+                if (window.assistant.isRecording) {
+                    try {
+                        const elapsed = Date.now() - window.assistant.startTime;
+                        const minutes = Math.floor(elapsed / 60000);
+                        const seconds = Math.floor((elapsed % 60000) / 1000);
+                        window.assistant.timer.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                    } catch (_) {}
+                    try { window.assistant.updateLiveTranscript && window.assistant.updateLiveTranscript(); } catch (_) {}
+                }
+            } catch (_) {}
+            return;
+        }
         // Create a simplified version of the MeetingAssistant class
         const assistant = {
             transcripts: [],
@@ -718,28 +737,71 @@
             _recognitionCooldown: false,
             _recognitionStartRequested: false,
             
-            // Get elements
-            recordBtn: container.querySelector('#recordBtn'),
-            status: container.querySelector('#status'),
-            searchBox: container.querySelector('#searchBox'),
-            transcriptList: container.querySelector('#transcriptList'),
-            recordingIndicator: container.querySelector('#recordingIndicator'),
-            timer: container.querySelector('#timer'),
-            liveTranscriptSection: container.querySelector('#liveTranscriptSection'),
-            liveTranscript: container.querySelector('#liveTranscript'),
-            completeTranscriptSection: container.querySelector('#completeTranscriptSection'),
-            completeTranscript: container.querySelector('#completeTranscript'),
-            
-            async init() {
+            // UI element references (bound via attachUI)
+            recordBtn: null,
+            status: null,
+            searchBox: null,
+            transcriptList: null,
+            recordingIndicator: null,
+            timer: null,
+            liveTranscriptSection: null,
+            liveTranscript: null,
+            completeTranscriptSection: null,
+            completeTranscript: null,
+
+            attachUI(containerRef) {
+                this.recordBtn = containerRef.querySelector('#recordBtn');
+                this.status = containerRef.querySelector('#status');
+                this.searchBox = containerRef.querySelector('#searchBox');
+                this.transcriptList = containerRef.querySelector('#transcriptList');
+                this.recordingIndicator = containerRef.querySelector('#recordingIndicator');
+                this.timer = containerRef.querySelector('#timer');
+                this.liveTranscriptSection = containerRef.querySelector('#liveTranscriptSection');
+                this.liveTranscript = containerRef.querySelector('#liveTranscript');
+                this.completeTranscriptSection = containerRef.querySelector('#completeTranscriptSection');
+                this.completeTranscript = containerRef.querySelector('#completeTranscript');
+                
+                // Bind handlers via property to avoid duplicate listeners on reattach
                 this.setupEventListeners();
+                
+                // Sync current state to the UI
+                this.updateUI();
+                if (this.isRecording) {
+                    try { this.timer.style.display = 'block'; } catch (_) {}
+                    try { this.liveTranscriptSection.style.display = 'block'; } catch (_) {}
+                    try { this.recordingIndicator.style.display = 'block'; } catch (_) {}
+                    try {
+                        const elapsed = Date.now() - this.startTime;
+                        const minutes = Math.floor(elapsed / 60000);
+                        const seconds = Math.floor((elapsed % 60000) / 1000);
+                        this.timer.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                    } catch (_) {}
+                    try { this.updateLiveTranscript(); } catch (_) {}
+                } else {
+                    // Ensure transcript list renders on attach
+                    try { this.displayTranscripts(this.transcripts || []); } catch (_) {}
+                }
+            },
+
+            detachUI() {
+                // No-op on purpose: keep recording running independently of UI lifecycle
+                // UI references will be replaced on the next attachUI call
+            },
+            
+            async init(containerRef) {
+                this.attachUI(containerRef);
                 this.setupSpeechRecognition();
                 await this.loadTranscripts();
                 this.setupSyncListeners();
             },
             
             setupEventListeners() {
-                this.recordBtn.addEventListener('click', () => this.toggleRecording());
-                this.searchBox.addEventListener('input', (e) => this.searchTranscripts(e.target.value));
+                if (this.recordBtn) {
+                    this.recordBtn.onclick = () => this.toggleRecording();
+                }
+                if (this.searchBox) {
+                    this.searchBox.oninput = (e) => this.searchTranscripts(e.target.value);
+                }
             },
             
             
@@ -754,7 +816,7 @@
             async startRecording() {
                 try {
                     console.log('Starting recording - requesting screen sharing permission...');
-                    this.status.textContent = 'Requesting screen sharing permission...';
+                    if (this.status) this.status.textContent = 'Requesting screen sharing permission...';
                     
                     // Always request screen sharing permission first to capture system audio
                     let stream;
@@ -777,7 +839,7 @@
                             suppressLocalAudioPlayback: false
                         });
                         console.log('System audio capture successful - can record YouTube, videos, etc.');
-                        this.status.textContent = 'Recording system audio (including videos)...';
+                        if (this.status) this.status.textContent = 'Recording system audio (including videos)...';
                         // Immediately stop the video track; keep audio only
                         try {
                             stream.getVideoTracks().forEach(t => t.stop());
@@ -789,9 +851,9 @@
                         
                         // Show user-friendly message about screen sharing
                         if (displayError.name === 'NotAllowedError') {
-                            this.status.textContent = 'Screen sharing denied. Using microphone instead...';
+                            if (this.status) this.status.textContent = 'Screen sharing denied. Using microphone instead...';
                         } else {
-                            this.status.textContent = 'Screen sharing failed (' + (displayError.name || 'Error') + '). Using microphone...';
+                            if (this.status) this.status.textContent = 'Screen sharing failed (' + (displayError.name || 'Error') + '). Using microphone...';
                         }
                         
                         // Fallback to microphone
@@ -805,7 +867,7 @@
                                 } 
                             });
                             console.log('Microphone capture successful');
-                            this.status.textContent = 'Recording microphone...';
+                            if (this.status) this.status.textContent = 'Recording microphone...';
                         } catch (micError) {
                             throw micError; // Let the outer catch handle microphone errors
                         }
@@ -850,11 +912,11 @@
                         this.recognitionActive = false;
                         this._recognitionCooldown = false;
                         // Show appropriate message based on audio source
-                        const isSystemAudio = this.status.textContent.includes('system audio');
+                        const isSystemAudio = this.status && this.status.textContent.includes('system audio');
                         const message = isSystemAudio 
                             ? '<div style="color: #2196F3; font-weight: bold;">🎧 Listening to system audio (YouTube, videos, etc.)...</div>'
                             : '<div style="color: #FF9800; font-weight: bold;">🎤 Listening to microphone...</div>';
-                        this.liveTranscript.innerHTML = message;
+                        if (this.liveTranscript) this.liveTranscript.innerHTML = message;
                         // recognition will be started on first dataavailable
                     }
 
@@ -877,7 +939,7 @@
                         errorMessage = 'Recording error: ' + error.name + ' - ' + (error.message || '');
                     }
                     
-                    this.status.textContent = errorMessage;
+                    if (this.status) this.status.textContent = errorMessage;
                 }
             },
             
@@ -926,12 +988,14 @@
             },
             
             startTimer() {
-                this.timer.style.display = 'block';
+                if (this.timer) this.timer.style.display = 'block';
                 this.timerInterval = setInterval(() => {
                     const elapsed = Date.now() - this.startTime;
                     const minutes = Math.floor(elapsed / 60000);
                     const seconds = Math.floor((elapsed % 60000) / 1000);
-                    this.timer.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                    if (this.timer) {
+                        this.timer.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                    }
                 }, 1000);
             },
             
@@ -944,34 +1008,34 @@
             
             updateUI() {
                 if (this.isRecording) {
-                    this.recordBtn.textContent = 'Stop Recording';
-                    this.recordBtn.style.background = '#f44336';
-                    this.recordingIndicator.style.display = 'block';
-                    this.liveTranscriptSection.style.display = 'block';
+                    if (this.recordBtn) this.recordBtn.textContent = 'Stop Recording';
+                    if (this.recordBtn) this.recordBtn.style.background = '#f44336';
+                    if (this.recordingIndicator) this.recordingIndicator.style.display = 'block';
+                    if (this.liveTranscriptSection) this.liveTranscriptSection.style.display = 'block';
                 } else {
-                    this.recordBtn.textContent = 'Start Recording';
-                    this.recordBtn.style.background = '#4CAF50';
-                    this.status.textContent = 'Processing recording...';
-                    this.recordingIndicator.style.display = 'none';
+                    if (this.recordBtn) this.recordBtn.textContent = 'Start Recording';
+                    if (this.recordBtn) this.recordBtn.style.background = '#4CAF50';
+                    if (this.status) this.status.textContent = 'Processing recording...';
+                    if (this.recordingIndicator) this.recordingIndicator.style.display = 'none';
                 }
             },
             
             resetUI() {
-                this.recordBtn.textContent = 'Start Recording';
-                this.recordBtn.style.background = '#4CAF50';
-                this.status.textContent = 'Click to start recording (will request screen sharing for video audio)';
-                this.timer.textContent = '00:00';
-                this.timer.style.display = 'none';
-                this.recordingIndicator.style.display = 'none';
-                this.liveTranscriptSection.style.display = 'none';
-                this.completeTranscriptSection.style.display = 'none';
-                this.liveTranscript.innerHTML = '<div>Click Start Recording to capture system audio from videos and get live transcription...</div>';
+                if (this.recordBtn) this.recordBtn.textContent = 'Start Recording';
+                if (this.recordBtn) this.recordBtn.style.background = '#4CAF50';
+                if (this.status) this.status.textContent = 'Click to start recording (will request screen sharing for video audio)';
+                if (this.timer) this.timer.textContent = '00:00';
+                if (this.timer) this.timer.style.display = 'none';
+                if (this.recordingIndicator) this.recordingIndicator.style.display = 'none';
+                if (this.liveTranscriptSection) this.liveTranscriptSection.style.display = 'none';
+                if (this.completeTranscriptSection) this.completeTranscriptSection.style.display = 'none';
+                if (this.liveTranscript) this.liveTranscript.innerHTML = '<div>Click Start Recording to capture system audio from videos and get live transcription...</div>';
                 this.finalTranscript = '';
             },
             
             async processAudio() {
                 try {
-                    this.status.textContent = 'Saving transcript...';
+                    if (this.status) this.status.textContent = 'Saving transcript...';
                     console.log('Processing audio, final transcript:', this.finalTranscript);
                     
                     // Rebuild full transcript from final words + last interim to ensure nothing lost
@@ -982,12 +1046,12 @@
                     
                     if (transcript && transcript.length > 0) {
                         console.log('Transcript found, saving:', transcript);
-                        this.completeTranscript.innerHTML = '<div>' + transcript + '</div>';
-                        this.completeTranscriptSection.style.display = 'block';
+                        if (this.completeTranscript) this.completeTranscript.innerHTML = '<div>' + transcript + '</div>';
+                        if (this.completeTranscriptSection) this.completeTranscriptSection.style.display = 'block';
                         
                         const recordingDuration = Date.now() - this.startTime;
                         await this.saveTranscript(transcript, Math.round(recordingDuration/1000) + 's');
-                        this.status.textContent = 'Transcript saved successfully!';
+                        if (this.status) this.status.textContent = 'Transcript saved successfully!';
                         
                         setTimeout(() => {
                             this.resetUI();
@@ -1001,9 +1065,9 @@
                         if (recordingDuration > 5000) { // 5 seconds
                             // Save with empty transcript text but include duration info in metadata
                             await this.saveTranscript('', Math.round(recordingDuration/1000) + 's');
-                            this.status.textContent = 'Recording saved (no speech detected)';
+                            if (this.status) this.status.textContent = 'Recording saved (no speech detected)';
                         } else {
-                            this.status.textContent = 'Recording too short or no speech detected';
+                            if (this.status) this.status.textContent = 'Recording too short or no speech detected';
                         }
                         
                         setTimeout(() => {
@@ -1014,7 +1078,7 @@
                     
                 } catch (error) {
                     console.error('Error processing audio:', error);
-                    this.status.textContent = 'Error saving transcript';
+                    if (this.status) this.status.textContent = 'Error saving transcript';
                     setTimeout(() => {
                         this.resetUI();
                     }, 5000);
@@ -1171,6 +1235,7 @@
             },
             
             updateLiveTranscript() {
+                if (!this.liveTranscript) return;
                 // Build lines of exactly up to 8 words per line; never delete committed words
                 const words = this.finalWords.slice();
                 const interim = this.lastInterimWords.slice();
@@ -1269,6 +1334,7 @@
             },
             
             displayTranscripts(transcripts) {
+                if (!this.transcriptList) return;
                 if (transcripts.length === 0) {
                     this.transcriptList.innerHTML = '<div style="text-align: center; opacity: 0.7; font-style: italic;">No transcripts yet</div>';
                     return;
@@ -1585,8 +1651,8 @@
         // Make assistant globally accessible for onclick handlers
         window.assistant = assistant;
         
-        // Initialize the assistant
-        assistant.init();
+        // Initialize the assistant with the current container
+        assistant.init(container);
     }
     
     function observeMeetingState() {
