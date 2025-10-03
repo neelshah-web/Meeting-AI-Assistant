@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Meeting AI Assistant",
+  "version": "1.0",
+  "description": "Record meetings, convert speech to text, and search through transcripts",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Meeting AI Assistant"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html", "popup.js", "transcript.html", "transcript.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
