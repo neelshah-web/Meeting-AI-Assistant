@@ -1678,12 +1678,28 @@
     // Listen for messages from the extension
     try {
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            if (request.action === 'getMeetingInfo') {
+            if (request && request.action === 'getMeetingInfo') {
                 sendResponse({
                     platform: currentPlatform,
                     url: window.location.href,
                     title: document.title
                 });
+                return;
+            }
+            if (request && (request.action === 'toggleOverlay' || request.action === 'openOverlay' || request.action === 'closeOverlay')) {
+                const overlay = document.getElementById('meeting-ai-overlay');
+                if (request.action === 'toggleOverlay') {
+                    if (overlay) {
+                        overlay.remove();
+                        try { chrome.storage && chrome.storage.local && chrome.storage.local.set({ overlayState: { isOpen: false, timestamp: Date.now() } }); } catch (_) {}
+                    } else {
+                        try { createFloatingOverlay(); saveOverlayState(true); } catch (_) {}
+                    }
+                } else if (request.action === 'openOverlay') {
+                    if (!overlay) { try { createFloatingOverlay(); saveOverlayState(true); } catch (_) {} }
+                } else if (request.action === 'closeOverlay') {
+                    if (overlay) { overlay.remove(); try { saveOverlayState(false); } catch (_) {} }
+                }
             }
         });
     } catch (error) {
